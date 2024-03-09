@@ -1,0 +1,24 @@
+name: adapter
+description: "A new Flutter package project."
+version: 0.0.1
+homepage:
+
+environment:
+  sdk: '>=3.2.3 <4.0.0'
+  flutter: ">=1.17.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  streaming_shared_preferences: 2.0.0
+  hive: 2.2.3
+  hive_flutter: 1.1.0
+  synchronized: 3.1.0+1
+  cbl: 2.2.2
+  cbl_flutter: 2.0.9
+  cbl_flutter_ce: 2.2.2
+
+dev_dependencies:
+  flutter_lints: ^3.0.1
+
+flutter:

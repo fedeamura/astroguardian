@@ -1,0 +1,65 @@
+name: astro_guardian
+description: "A new Flutter project."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.3 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  flame: 1.16.0
+  flame_forge2d: 0.17.0
+  uuid: 4.3.3
+  collection: 1.18.0
+  get_it: 7.6.7
+  flutter_hooks: 0.20.5
+  flutter_bloc: 8.1.4
+  equatable: 2.0.5
+  flame_audio: 2.10.0
+  spaced: 1.0.3
+  device_sim: 0.1.2
+  path: 1.8.3
+  path_provider: 2.1.2
+  touchable: 1.0.2
+
+  adapter:
+    path: packages/adapter
+
+  repository:
+    path: packages/repository
+
+  model:
+    path: packages/model
+
+  usecase:
+    path: packages/usecase
+
+  service:
+    path: packages/service
+
+  util:
+    path: packages/util
+
+dev_dependencies:
+  flutter_lints: 3.0.1
+
+flutter:
+  uses-material-design: true
+
+  fonts:
+    - family: Pixelify
+      fonts:
+        - asset: assets/fonts/quinquefive.ttf
+
+  assets:
+    - assets/audio/
+    - assets/images/
+    - assets/images/background/
+
+  shaders:
+    - shaders/crt.frag
+    - shaders/noise.frag
+#    - shaders/ellipses.frag
