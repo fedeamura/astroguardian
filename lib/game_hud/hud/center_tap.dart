@@ -21,6 +21,8 @@ class HudCenterTapComponent extends RectangleComponent with HasGameRef<GameHudCo
   @override
   void onTapUp(TapUpEvent event) {
     super.onTapUp(event);
+
     game.gameComponent.world.shipComponent.toggleRecycle();
+    game.gameComponent.keyConsumePressed = false;
   }
 }

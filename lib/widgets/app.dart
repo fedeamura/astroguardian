@@ -30,7 +30,6 @@ class GameApp extends StatelessWidget {
           useMaterial3: true,
         ),
         home: const SplashScreen(),
-        // home: const TestSatelliteScreen(),
         builder: (context, child) => CustomShaderCRT(
           enabled: GameConstants.crtEnabled,
           child: child!,

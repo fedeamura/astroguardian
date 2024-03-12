@@ -9,6 +9,7 @@ import 'package:flame/camera.dart';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
+import 'package:model/model.dart';
 import 'package:util/util.dart';
 
 import 'indicator.dart';
@@ -19,9 +20,9 @@ class HudMapCameraComponent extends PositionComponent with HasGameRef<GameHudCom
   late RectangleComponent _backgroundComponent;
   late CameraComponent _cameraComponent;
   late HudMapIndicatorComponent _initialPlanetIndicatorComponent;
-  bool? _visible;
 
-  bool get _calculateVisibility => true;
+  bool _expanded = false;
+  double? _mapSize;
 
   @override
   FutureOr<void> onLoad() async {
@@ -44,7 +45,12 @@ class HudMapCameraComponent extends PositionComponent with HasGameRef<GameHudCom
       cameraComponent: _cameraComponent,
       color: Colors.amber,
       positionProvider: () => game.gameComponent.game.mapMarker.vector2,
-      visibilityProvider: () => game.gameComponent.game.mapMarkerVisible,
+      visibilityProvider: () {
+        final g = game.gameComponent.game;
+        final conversation = g.conversations[ConversationType.tutorialInit] == true;
+        if (!conversation) return false;
+        return game.gameComponent.game.mapMarkerVisible;
+      },
     );
     await _cameraComponent.viewport.add(_initialPlanetIndicatorComponent);
 
@@ -54,12 +60,8 @@ class HudMapCameraComponent extends PositionComponent with HasGameRef<GameHudCom
   @override
   void update(double dt) {
     _updateSize(dt);
-    _updateVisibility();
-
     super.update(dt);
   }
-
-  double? _mapSize;
 
   _updateSize(double dt) {
     final s = game.camera.viewport.size;
@@ -77,7 +79,15 @@ class HudMapCameraComponent extends PositionComponent with HasGameRef<GameHudCom
       time: 0.2,
     ).clamp(1.0, 99999);
     _mapSize = mapSize;
-
+    //
+    // var x = LerpUtils.d(
+    //   dt,
+    //   target: _visible? s.x - mapSize - padding - p.left:0.0,
+    //   value: _cameraX,
+    //   time: time,
+    // );
+    //
+    // position.x = 100;
     position.x = s.x - mapSize - padding - p.left;
     position.y = p.top + padding;
     size = Vector2.all(mapSize);
@@ -100,15 +110,6 @@ class HudMapCameraComponent extends PositionComponent with HasGameRef<GameHudCom
 
     _cameraComponent.viewport.position = position.clone() + Vector2.all(scale * 3);
   }
-
-  _updateVisibility() {
-    final visible = _calculateVisibility;
-    if (visible == _visible) return;
-
-    _visible = visible;
-  }
-
-  bool _expanded = false;
 
   @override
   void onTapUp(TapUpEvent event) {

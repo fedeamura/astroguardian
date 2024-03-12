@@ -2,13 +2,11 @@ import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:astro_guardian/game/border.dart';
-import 'package:astro_guardian/game/util/lerp.dart';
 import 'package:astro_guardian/game/util/painter/image.dart';
 import 'package:astro_guardian/game_hud/game_hud.dart';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
-import 'package:model/model.dart';
 
 class HudMenuButtonComponent extends PositionComponent with HasGameRef<GameHudComponent>, TapCallbacks {
   late BorderComponent _borderComponent;
@@ -17,12 +15,9 @@ class HudMenuButtonComponent extends PositionComponent with HasGameRef<GameHudCo
 
   late SpriteComponent _spriteComponent;
 
-  bool _visible = false;
-
   @override
   FutureOr<void> onLoad() async {
     anchor = Anchor.center;
-    _visible = _calculateVisibility();
 
     _imageMenu = ImagePainterUtil.drawPixelsString(
       paint: ui.Paint()..color = Colors.white,
@@ -67,18 +62,12 @@ class HudMenuButtonComponent extends PositionComponent with HasGameRef<GameHudCo
     );
     await add(_spriteComponent);
 
-    if (!_visible) {
-      _borderComponent.opacity = 0.0;
-      _spriteComponent.opacity = 0.0;
-      scale = Vector2.all(0.7);
-    }
     return super.onLoad();
   }
 
   @override
   void update(double dt) {
     _updateSize(dt);
-    _updateVisibility(dt);
     _updateIcon();
     super.update(dt);
   }
@@ -102,28 +91,6 @@ class HudMenuButtonComponent extends PositionComponent with HasGameRef<GameHudCo
     _spriteComponent.position = Vector2.all(scale * 2);
   }
 
-  _updateVisibility(double dt) {
-    _visible = _calculateVisibility();
-
-    final scaleValue = LerpUtils.d(
-      dt,
-      target: _visible ? 1.0 : 0.7,
-      value: scale.x,
-      time: 0.1,
-    ).clamp(0.0, 10.0);
-    scale = Vector2.all(scaleValue);
-
-    final opacityValue = LerpUtils.d(
-      dt,
-      target: _visible ? 1.0 : 0.0,
-      value: _borderComponent.opacity,
-      time: 0.1,
-    ).clamp(0.0, 1.0);
-
-    _borderComponent.opacity = opacityValue;
-    _spriteComponent.opacity = opacityValue;
-  }
-
   _updateIcon() {
     final withPoints = game.gameComponent.game.ship.pendingAbilityPoints > 0;
     if (withPoints) {
@@ -139,11 +106,5 @@ class HudMenuButtonComponent extends PositionComponent with HasGameRef<GameHudCo
   void onTapUp(TapUpEvent event) {
     game.menuCallback?.call();
     super.onTapUp(event);
-  }
-
-  bool _calculateVisibility() {
-    if (!game.gameComponent.game.tutorial) return true;
-    final conversations = game.gameComponent.game.conversations;
-    return conversations[ConversationType.tutorialLevelUp] == true;
   }
 }

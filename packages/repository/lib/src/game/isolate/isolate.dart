@@ -81,8 +81,6 @@ _initIsolate(SendPort sendPort) {
 }
 
 Game? _parse(dynamic data) {
-  log("Parsing game data $data");
-
   if (data == null) return null;
   if (data is! Map) return null;
 
@@ -101,6 +99,5 @@ Game? _parse(dynamic data) {
 }
 
 Map<String, dynamic> _encode(Game model) {
-  log("Encoding game ${model.toJson()}");
   return model.toJson();
 }

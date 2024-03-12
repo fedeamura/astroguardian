@@ -5,7 +5,9 @@ import 'package:astro_guardian/game/game.dart';
 import 'package:astro_guardian/game/util/extension/string.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
+import 'package:image/image.dart' as img;
 import 'package:model/model.dart';
+import 'package:util/util.dart';
 
 class PlanetRenderComponent extends PositionComponent with HasGameRef<GameComponent> {
   final Planet planet;
@@ -14,85 +16,32 @@ class PlanetRenderComponent extends PositionComponent with HasGameRef<GameCompon
     required this.planet,
   });
 
-  late ClipComponent _clipComponent;
-  late SpriteComponent _spriteTerrain1Component;
-  late SpriteComponent _spriteTerrain2Component;
-  late SpriteComponent _spriteAtmosphere1Component;
-  late SpriteComponent _spriteAtmosphere2Component;
-  late RectangleComponent _dimComponent;
-  bool _toggleTerrain = true;
-  bool _toggleAtmosphere = true;
+  ui.Image? _terrain1;
+  ui.Image? _terrain2;
+  ui.Image? _atmosphere1;
+  ui.Image? _atmosphere2;
+
+  double _percentage1 = 0.5;
+  double _percentage2 = 1.0;
 
   @override
   FutureOr<void> onLoad() {
-    _clipComponent = ClipComponent.circle(
-      size: Vector2.all(planet.radius * 2.0),
-      anchor: Anchor.center,
-      position: Vector2.all(planet.radius * 0.0),
-    );
-    add(_clipComponent);
-
-    _spriteTerrain1Component = SpriteComponent(
-      size: Vector2.all(planet.radius * 2.0),
-      sprite: Sprite(_createTerrainImage(first: true)),
-      position: Vector2(0, planet.radius.toDouble()),
-      anchor: Anchor.center,
-      paint: Paint()
-        ..filterQuality = FilterQuality.none
-        ..isAntiAlias = false,
-    );
-    _clipComponent.add(_spriteTerrain1Component);
-
-    _spriteTerrain2Component = SpriteComponent(
-      size: Vector2.all(planet.radius * 2.0),
-      sprite: Sprite(_createTerrainImage(first: false)),
-      position: Vector2(planet.radius * 2.0, planet.radius.toDouble()),
-      anchor: Anchor.center,
-      paint: Paint()
-        ..filterQuality = FilterQuality.none
-        ..isAntiAlias = false,
-    );
-    _clipComponent.add(_spriteTerrain2Component);
-
-    _spriteAtmosphere1Component = SpriteComponent(
-      size: Vector2.all(planet.radius * 2.0),
-      sprite: Sprite(_createAtmosphereImage(first: true)),
-      position: Vector2(0, planet.radius.toDouble()),
-      anchor: Anchor.center,
-      paint: Paint()
-        ..filterQuality = FilterQuality.none
-        ..isAntiAlias = false,
-    );
-    _clipComponent.add(_spriteAtmosphere1Component);
-
-    _spriteAtmosphere2Component = SpriteComponent(
-      size: Vector2.all(planet.radius * 2.0),
-      sprite: Sprite(_createAtmosphereImage(first: false)),
-      position: Vector2(planet.radius * 2.0, planet.radius.toDouble()),
-      anchor: Anchor.center,
-      paint: Paint()
-        ..filterQuality = FilterQuality.none
-        ..isAntiAlias = false,
-    );
-    _clipComponent.add(_spriteAtmosphere2Component);
-
-    _dimComponent = RectangleComponent(
-      paint: Paint()
-        ..color = Colors.black
-        ..blendMode = ui.BlendMode.color,
-    );
-    _clipComponent.add(_dimComponent);
-
+    size = Vector2.all(planet.radius * 2.0);
+    anchor = Anchor.center;
+    _createTerrainImage(first: true).then((value) => _terrain1 = value);
+    _createTerrainImage(first: false).then((value) => _terrain2 = value);
+    _createAtmosphereImage(first: true).then((value) => _atmosphere1 = value);
+    _createAtmosphereImage(first: false).then((value) => _atmosphere2 = value);
     return super.onLoad();
   }
 
-  _createTerrainImage({required bool first}) {
+  Future<ui.Image> _createTerrainImage({required bool first}) async {
     final resolution = planet.terrain.resolution;
 
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
 
-    canvas.drawColor(Colors.white, ui.BlendMode.src);
+    canvas.drawRect(Rect.fromLTWH(0, 0, resolution * 2, resolution * 2), Paint()..color = Colors.white);
 
     final colors = planet.terrain.colors;
 
@@ -114,13 +63,35 @@ class PlanetRenderComponent extends PositionComponent with HasGameRef<GameCompon
     }
 
     final picture = recorder.endRecording();
-    return picture.toImageSync(
+    final uiImage = picture.toImageSync(
       resolution.floor() * 2,
       resolution.floor() * 2,
     );
+
+    final byteData = await uiImage.toByteData();
+    final image = img.Image.fromBytes(
+      width: uiImage.width,
+      height: uiImage.height,
+      bytes: byteData!.buffer,
+      numChannels: 4,
+    );
+
+    final resized = img.copyResize(
+      image,
+      width: (planet.radius * 2.0).floor(),
+      height: (planet.radius * 2.0).floor(),
+    );
+
+    Completer<ui.Image> completer = Completer();
+
+    ui.decodeImageFromList(img.encodePng(resized), (result) {
+      completer.complete(result);
+    });
+
+    return completer.future;
   }
 
-  _createAtmosphereImage({required bool first}) {
+  Future<ui.Image> _createAtmosphereImage({required bool first}) async {
     final resolution = planet.terrain.resolution;
 
     final recorder = ui.PictureRecorder();
@@ -145,70 +116,173 @@ class PlanetRenderComponent extends PositionComponent with HasGameRef<GameCompon
     }
 
     final picture = recorder.endRecording();
-    return picture.toImageSync(
+    final uiImage = picture.toImageSync(
       resolution.floor() * 2,
       resolution.floor() * 2,
     );
+
+    final byteData = await uiImage.toByteData();
+    final image = img.Image.fromBytes(
+      width: uiImage.width,
+      height: uiImage.height,
+      bytes: byteData!.buffer,
+      numChannels: 4,
+    );
+
+    final resized = img.copyResize(
+      image,
+      width: (planet.radius * 2.0).floor(),
+      height: (planet.radius * 2.0).floor(),
+    );
+
+    Completer<ui.Image> completer = Completer();
+
+    ui.decodeImageFromList(img.encodePng(resized), (result) {
+      completer.complete(result);
+    });
+
+    return completer.future;
   }
 
   @override
   void update(double dt) {
-    _moveTerrain(dt);
-    _moveAtmosphere(dt);
+    final d = 0.1 * dt;
 
-    final s = planet.radius * 2;
-    _dimComponent.size = Vector2.all(s.toDouble());
-    _dimComponent.opacity = 1 - planet.percentage;
+    _percentage1 -= d;
+    _percentage1 %= 1.0;
+
+    _percentage2 -= d;
+    _percentage2 %= 1.0;
 
     super.update(dt);
   }
 
-
   @override
   void render(ui.Canvas canvas) {
     super.render(canvas);
-    final isMainCamera = CameraComponent.currentCamera == game.camera;
-    _spriteTerrain1Component.opacity = isMainCamera ? 1.0:0.0;
-    _spriteTerrain2Component.opacity = isMainCamera ? 1.0:0.0;
-    _spriteAtmosphere1Component.opacity = isMainCamera ? 1.0:0.0;
-    _spriteAtmosphere2Component.opacity = isMainCamera ? 1.0:0.0;
-  }
+    var isMainCamera = CameraComponent.currentCamera == game.camera;
 
+    final t1 = MathRangeUtil.range(
+      _percentage1,
+      0.0,
+      1.0,
+      -planet.radius * 2.0,
+      planet.radius * 2.0,
+    );
 
-  _moveTerrain(double dt) {
-    final s = planet.radius * 2;
-    final d = planet.spinSpeed * s * dt;
-    final sprite1 = _toggleTerrain ? _spriteTerrain1Component : _spriteTerrain2Component;
-    final sprite2 = _toggleTerrain ? _spriteTerrain2Component : _spriteTerrain1Component;
+    final t2 = MathRangeUtil.range(
+      _percentage2,
+      0.0,
+      1.0,
+      -planet.radius * 2.0,
+      planet.radius * 2.0,
+    );
 
-    final x = sprite1.position.x - d;
-    if (x < -s * 0.5) {
-      sprite1.position.x = s * 1.5;
-      sprite2.position.x = s * 0.5;
-      _toggleTerrain = !_toggleTerrain;
-    } else {
-      sprite1.x = x;
-      sprite2.x = x + s * 1.0;
+    if (isMainCamera) {
+      canvas.save();
+      final circlePath = Path()
+        ..addOval(
+          Rect.fromCircle(
+            center: Offset(planet.radius, planet.radius),
+            radius: planet.radius,
+          ),
+        );
+      canvas.clipPath(circlePath);
+
+      if (_terrain1 != null) {
+        canvas.drawImageRect(
+          _terrain1!,
+          Rect.fromLTWH(
+            0,
+            0,
+            _terrain1!.width.toDouble(),
+            _terrain1!.height.toDouble(),
+          ),
+          Rect.fromLTWH(
+            t1,
+            0,
+            planet.radius * 2.0,
+            planet.radius * 2.0,
+          ),
+          Paint()
+            ..filterQuality = FilterQuality.none
+            ..isAntiAlias = false,
+        );
+      }
+
+      if (_terrain2 != null) {
+        canvas.drawImageRect(
+          _terrain2!,
+          Rect.fromLTWH(
+            0,
+            0,
+            _terrain2!.width.toDouble(),
+            _terrain2!.height.toDouble(),
+          ),
+          Rect.fromLTWH(
+            t2,
+            0,
+            planet.radius * 2.0,
+            planet.radius * 2.0,
+          ),
+          Paint()
+            ..filterQuality = FilterQuality.none
+            ..isAntiAlias = false,
+        );
+      }
+
+      if (_atmosphere1 != null) {
+        canvas.drawImageRect(
+          _atmosphere1!,
+          Rect.fromLTWH(
+            0,
+            0,
+            _atmosphere1!.width.toDouble(),
+            _atmosphere1!.height.toDouble(),
+          ),
+          Rect.fromLTWH(
+            t1,
+            0,
+            planet.radius * 2.0,
+            planet.radius * 2.0,
+          ),
+          Paint()
+            ..filterQuality = FilterQuality.none
+            ..isAntiAlias = false,
+        );
+      }
+
+      if (_atmosphere2 != null) {
+        canvas.drawImageRect(
+          _atmosphere2!,
+          Rect.fromLTWH(
+            0,
+            0,
+            _atmosphere2!.width.toDouble(),
+            _atmosphere2!.height.toDouble(),
+          ),
+          Rect.fromLTWH(
+            t2,
+            0,
+            planet.radius * 2.0,
+            planet.radius * 2.0,
+          ),
+          Paint()
+            ..filterQuality = FilterQuality.none
+            ..isAntiAlias = false,
+        );
+      }
+
+      canvas.drawRect(
+        Rect.fromLTWH(0.0, 0.0, planet.radius * 2, planet.radius * 2),
+        Paint()
+          ..color = Colors.black.withOpacity(1 - planet.percentage)
+          ..blendMode = ui.BlendMode.color
+          ..filterQuality = FilterQuality.none
+          ..isAntiAlias = false,
+      );
+
+      canvas.restore();
     }
   }
-
-
-
-  _moveAtmosphere(double dt) {
-    final s = planet.radius * 2;
-    final d = planet.spinSpeed * s * dt * 0.8;
-    final sprite1 = _toggleAtmosphere ? _spriteAtmosphere1Component : _spriteAtmosphere2Component;
-    final sprite2 = _toggleAtmosphere ? _spriteAtmosphere2Component : _spriteAtmosphere1Component;
-
-    final x = sprite1.position.x - d;
-    if (x < -s * 0.5) {
-      sprite1.position.x = s * 1.5;
-      sprite2.position.x = s * 0.5;
-      _toggleAtmosphere = !_toggleAtmosphere;
-    } else {
-      sprite1.x = x;
-      sprite2.x = x + s * 1.0;
-    }
-  }
-
 }

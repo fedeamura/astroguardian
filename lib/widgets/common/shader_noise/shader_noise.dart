@@ -74,7 +74,7 @@ class _CustomShaderNoiseState extends State<CustomShaderNoise> with SingleTicker
       _shader?.setFloat(2, _delta);
       _shader?.setFloat(3, widget.percentage?.value ?? 1.0);
       _shader?.setFloat(4, 0.8);
-      _shader?.setFloat(4, 0.3);
+      _shader?.setFloat(5, 0.3);
 
       if (mounted) {
         setState(() => _image = image);

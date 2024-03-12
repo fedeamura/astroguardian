@@ -19,7 +19,7 @@ class PlanetSatellitesOrbitComponent extends PositionComponent with HasGameRef<G
 
   @override
   void render(Canvas canvas) {
-    if(CameraComponent.currentCamera==game.camera){
+    if (CameraComponent.currentCamera == game.camera) {
       _render(canvas);
     }
 

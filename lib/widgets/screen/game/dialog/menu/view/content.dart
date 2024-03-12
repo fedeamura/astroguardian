@@ -11,6 +11,7 @@ import 'package:astro_guardian/widgets/screen/game/dialog/ship/ship.dart';
 import 'package:astro_guardian/widgets/screen/game/dialog/stellar_map/index.dart';
 import 'package:astro_guardian/widgets/screen/game_exit/view/screen.dart';
 import 'package:flutter/material.dart';
+import 'package:model/model.dart';
 
 class GameDialogMenuContent extends StatefulWidget {
   final Animation<double> animation;
@@ -27,7 +28,11 @@ class _GameDialogMenuContentState extends State<GameDialogMenuContent> {
 
   @override
   Widget build(BuildContext context) {
-    final withPoints = widget.game.game.ship.pendingAbilityPoints > 0;
+    final game = widget.game.game;
+    final conversations = game.conversations;
+    final tutorial = game.tutorial;
+    final shipVisible = !tutorial || conversations[ConversationType.tutorialLevelUp] == true;
+    final withPoints = game.ship.pendingAbilityPoints > 0;
     final shipIndicatorVisible = withPoints;
 
     return GameDialogContent(
@@ -39,38 +44,42 @@ class _GameDialogMenuContentState extends State<GameDialogMenuContent> {
       title: "Menu",
       builder: (context) => Column(
         children: [
-          GameListTile(
-            title: "SHIP",
-            onPressed: _goToShip,
-            trailingBuilder: (context) => CustomAnimatedFadeVisibility(
-              visible: shipIndicatorVisible,
-              child: SizedBox(
-                width: 15,
-                height: 15,
-                child: RawImage(
-                  image: _exclamationPointImage,
-                  fit: BoxFit.cover,
+          if (shipVisible) ...[
+            GameListTile(
+              title: "SHIP",
+              onPressed: _goToShip,
+              trailingBuilder: (context) => CustomAnimatedFadeVisibility(
+                visible: shipIndicatorVisible,
+                child: SizedBox(
+                  width: 15,
+                  height: 15,
+                  child: RawImage(
+                    image: _exclamationPointImage,
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 8.0),
-          GameListTile(
-            title: "STELLAR MAP",
-            onPressed: () => showGameDialogStellarMap(
-              context,
-              game: widget.game,
+            const SizedBox(height: 8.0),
+          ],
+          if (!tutorial) ...[
+            GameListTile(
+              title: "STELLAR MAP",
+              onPressed: () => showGameDialogStellarMap(
+                context,
+                game: widget.game,
+              ),
             ),
-          ),
-          const SizedBox(height: 8.0),
-          GameListTile(
-            title: "PLANETS",
-            onPressed: () => showGameDialogPlanets(
-              context,
-              game: widget.game,
+            const SizedBox(height: 8.0),
+            GameListTile(
+              title: "PLANETS",
+              onPressed: () => showGameDialogPlanets(
+                context,
+                game: widget.game,
+              ),
             ),
-          ),
-          const SizedBox(height: 8.0),
+            const SizedBox(height: 8.0),
+          ],
           GameListTile(
             title: "EXIT",
             onPressed: () => _exitGame(context),

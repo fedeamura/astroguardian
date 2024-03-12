@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:astro_guardian/game/util/lerp.dart';
 import 'package:astro_guardian/game_hud/game_hud.dart';
@@ -117,11 +118,10 @@ class HudMapIndicatorComponent extends PositionComponent with HasGameRef<GameHud
   bool _calculateVisibility() {
     final visible = visibilityProvider();
     if (!visible) return false;
-
-    final pos = _calculatePosition();
-    final s = cameraComponent.viewport.size;
-    if (pos.x > 0 && pos.x < s.x && pos.y > 0 && pos.y < s.y) return false;
-
+    final pos = positionProvider();
+    final shipPosition = game.gameComponent.world.shipComponent.position;
+    final distance = shipPosition.distanceTo(pos);
+    if(distance<30)return false;
     return true;
   }
 }

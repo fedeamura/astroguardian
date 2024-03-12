@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
@@ -178,6 +179,8 @@ class PlanetComponent extends BodyComponent<GameComponent> {
   _onPlanetVisible() {
     _savePlanetInfo();
 
+    log("On planet visible");
+
     _planetRenderComponent?.removeFromParent();
     _planetRenderComponent = null;
 
@@ -188,6 +191,8 @@ class PlanetComponent extends BodyComponent<GameComponent> {
   }
 
   _onPlanetInvisible() {
+    log("On planet invisible");
+
     _planetRenderComponent?.removeFromParent();
     _planetRenderComponent = null;
   }
@@ -224,13 +229,8 @@ class PlanetComponent extends BodyComponent<GameComponent> {
     final isInitial = planet.isInitialPlanet;
     if (!isInitial) return;
 
-    if (calculatePlanetTotallyVisible()) {
+    if (calculateInitialPlanetVisible()) {
       game.showConversation?.call(ConversationType.tutorialPlanetFound);
-    }
-
-    final isEmpty = planet.satellites.isEmpty;
-    if (isEmpty) {
-      game.showConversation?.call(ConversationType.tutorialSatellitesCompleted);
     }
   }
 
@@ -238,6 +238,21 @@ class PlanetComponent extends BodyComponent<GameComponent> {
     final projection = game.worldToScreen(planet.globalPosition.vector2);
     final projectionEndPoint = game.worldToScreen(
       planet.globalPosition.vector2 + Vector2(planet.radius, 0.0),
+    );
+    final radius = projectionEndPoint.distanceTo(projection);
+
+    return game.size.toRect().overlaps(
+          Rect.fromCircle(
+            center: Offset(projection.x, projection.y),
+            radius: radius,
+          ),
+        );
+  }
+
+  bool calculateInitialPlanetVisible() {
+    final projection = game.worldToScreen(planet.globalPosition.vector2);
+    final projectionEndPoint = game.worldToScreen(
+      planet.globalPosition.vector2 + Vector2(planet.radius * 0.8, 0.0),
     );
     final radius = projectionEndPoint.distanceTo(projection);
 
@@ -264,24 +279,9 @@ class PlanetComponent extends BodyComponent<GameComponent> {
         );
   }
 
-  bool calculatePlanetTotallyVisible() {
-    final projection = game.worldToScreen(planet.globalPosition.vector2);
-    final projectionEndPoint = game.worldToScreen(
-      planet.globalPosition.vector2 + Vector2(planet.radius * 0.25, 0.0),
-    );
-    final radius = projectionEndPoint.distanceTo(projection);
-
-    return game.size.toRect().overlaps(
-          Rect.fromCircle(
-            center: Offset(projection.x, projection.y),
-            radius: radius,
-          ),
-        );
-  }
-
   _move(PlanetSatellite satellite, double dt) {
     if (satellite.consuming) {
-      // _moveToShip(satellite, dt);
+      _moveToShip(satellite, dt);
     } else {
       _orbit(satellite, dt);
     }

@@ -14,14 +14,12 @@ class HudExperienceComponent extends PositionComponent with HasGameRef<GameHudCo
   double get _anim => 0.2;
 
   bool _visible = false;
-  bool _menuVisible = false;
   bool _first = true;
 
   @override
   FutureOr<void> onLoad() async {
     anchor = Anchor.center;
     _visible = _calculateVisibility();
-    _menuVisible = _calculateMenuVisibility();
 
     _borderComponent = BorderComponent(
       gameScaleProvider: () => game.gameComponent.gameScale,
@@ -50,7 +48,6 @@ class HudExperienceComponent extends PositionComponent with HasGameRef<GameHudCo
     _updateVisibility(dt);
   }
 
-
   _updateSize(double dt) {
     final scale = game.gameComponent.gameScale;
     final padding = 4.0 * scale;
@@ -63,12 +60,12 @@ class HudExperienceComponent extends PositionComponent with HasGameRef<GameHudCo
 
     if (_first) {
       _first = false;
-      position.x = p.left + padding + s.x * 0.5 + (_menuVisible ? 7 * scale : 0.0);
+      position.x = p.left + padding + s.x * 0.5 + 7 * scale;
     }
 
     final px = LerpUtils.d(
       dt,
-      target: p.left + padding + s.x * 0.5 + (_menuVisible ? 7 * scale : 0.0),
+      target: p.left + padding + s.x * 0.5 + 7 * scale,
       value: position.x,
       time: 0.1,
     );
@@ -99,7 +96,6 @@ class HudExperienceComponent extends PositionComponent with HasGameRef<GameHudCo
 
   _updateVisibility(double dt) {
     _visible = _calculateVisibility();
-    _menuVisible = _calculateMenuVisibility();
 
     final scaleValue = LerpUtils.d(
       dt,
@@ -129,11 +125,5 @@ class HudExperienceComponent extends PositionComponent with HasGameRef<GameHudCo
     if (!game.gameComponent.game.tutorial) return true;
     final conversations = game.gameComponent.game.conversations;
     return conversations[ConversationType.tutorialRecycle] == true;
-  }
-
-  bool _calculateMenuVisibility() {
-    if (!game.gameComponent.game.tutorial) return true;
-    final conversations = game.gameComponent.game.conversations;
-    return conversations[ConversationType.tutorialLevelUp] == true;
   }
 }

@@ -10,32 +10,17 @@ import 'package:util/util.dart';
 import 'ray_particle.dart';
 
 class ShipRayRenderComponent extends PositionComponent with HasGameRef<GameComponent> {
-  double _percentage = 0.0;
-
   bool get isConsuming => game.keyConsumePressed && !game.game.ship.isBagFull;
 
-  int get _lineCount => 50;
-
-  int get _linePoints => 20;
+  int get _lineCount => 10;
 
   bool? _visible;
   final _rnd = RandomUtil();
-  final _lineAmplitude = <int, double>{};
-  final _lineAngleScale = <int, double>{};
-  final _lineAngle = <int, double>{};
-  final _lineLength = <int, double>{};
-  final _lineColor = <int, double>{};
 
-  final _selectedLineAmplitude = <int, double>{};
-  final _selectedLineAngleScale = <int, double>{};
-  final _selectedLineAngle = <int, double>{};
-  final _selectedLineLength = <int, double>{};
-  final _selectedLineColor = <int, double>{};
-
-  final _animatedSelectedLineAngle = <int, double>{};
-  final _animatedSelectedLineOpacity = <int, double>{};
-  final _animatedSelectedLineLength = <int, double>{};
-  double _animatedLineOpacity = 0.0;
+  double _percentage = 0.0;
+  final _lineWidth = <int, double>{};
+  final _lineColor = <int, Color>{};
+  final _linePercentage = <int, double>{};
 
   @override
   FutureOr<void> onLoad() async {
@@ -59,10 +44,9 @@ class ShipRayRenderComponent extends PositionComponent with HasGameRef<GameCompo
       time: 0.1,
     );
 
-    size = Vector2.all(l * _percentage);
+    size = Vector2.all(l);
 
     _calculate();
-    _calculatedSelected(dt);
     _incrementAngle(dt);
     _addParticle(dt);
     super.update(dt);
@@ -74,93 +58,26 @@ class ShipRayRenderComponent extends PositionComponent with HasGameRef<GameCompo
 
     if (isConsuming) {
       for (int i = 0; i <= _lineCount; i++) {
-        _lineAngleScale[i] = _rnd.nextDoubleInRange(1, 2);
-        _lineAmplitude[i] = _rnd.nextDoubleInRange(1.2, 1.5);
-        _lineLength[i] = _rnd.nextDoubleInRange(0.8, 1.0);
-        _lineColor[i] = _rnd.nextDoubleInRange(180.0, 300.0);
-
-        _selectedLineAngleScale[i] = _rnd.nextDoubleInRange(1, 2);
-        _selectedLineAmplitude[i] = _rnd.nextDoubleInRange(3.0, 4.0);
-        _selectedLineLength[i] = 1.0;
-        _selectedLineColor[i] = _rnd.nextDoubleInRange(200.0, 250.0);
+        _lineWidth[i] = _rnd.nextDoubleInRange(0.01, 0.03);
+        _linePercentage[i] = 1 - (i / _lineCount);
       }
-    }
-  }
-
-  _calculatedSelected(double dt) {
-    final shipPosition = game.world.shipComponent.position;
-    final shipAngle = game.world.shipComponent.angle;
-    final count = game.game.ship.rayCount.value.floor();
-    final selectedSatellites = game.world.shipComponent.rayComponent.selectedSatellites;
-
-    _animatedLineOpacity = LerpUtils.d(
-      dt,
-      target: count == selectedSatellites.entries.length ? 0.0 : 1.0,
-      value: _animatedLineOpacity,
-      time: 0.1,
-    );
-
-    int index = 0;
-    for (var element in selectedSatellites.entries) {
-      final satellite = element.value;
-
-      // Opacity
-      _animatedSelectedLineOpacity[index] = LerpUtils.d(
-        dt,
-        target: 1,
-        value: _animatedSelectedLineOpacity[index] ?? 0.0,
-        time: 0.1,
-      );
-
-      // Length
-      final currentLineLength = _animatedSelectedLineLength[index] ?? 0.0;
-      final lineDistance = satellite.position.distanceTo(shipPosition);
-      _animatedSelectedLineLength[index] = LerpUtils.d(
-        dt,
-        target: lineDistance,
-        value: currentLineLength,
-        time: 0.1,
-      );
-
-      // Angle
-      var newAngle = math.atan2(
-        satellite.position.y - shipPosition.y,
-        satellite.position.x - shipPosition.x,
-      );
-      newAngle = newAngle - shipAngle + math.pi * 0.75;
-      _animatedSelectedLineAngle[index] = newAngle;
-
-      index++;
-    }
-
-    for (int i = index; i < count; i++) {
-      // Opacity
-      _animatedSelectedLineOpacity[i] = LerpUtils.d(
-        dt,
-        target: 0,
-        value: _animatedSelectedLineOpacity[i] ?? 0.0,
-        time: 0.1,
-      );
-
-      // Length
-      final currentLineLength = _animatedSelectedLineLength[i] ?? 0.0;
-      double newLineLength = 0.0;
-      _animatedSelectedLineLength[i] = LerpUtils.d(
-        dt,
-        target: newLineLength,
-        value: currentLineLength,
-        time: 0.1,
-      );
     }
   }
 
   _incrementAngle(double dt) {
     for (int i = 0; i <= _lineCount; i++) {
-      final lineAngleScale = _lineAngleScale[i] ?? 1.0;
-      _lineAngle[i] = (_lineAngle[i] ?? 0.0) + dt * math.pi * 2 * lineAngleScale;
+      var p = (_linePercentage[i] ?? 0);
+      const velocity = 0.2;
+      p += velocity * dt;
+      if (p >= 1) {
+        final colorValue = _rnd.nextDoubleInRange(150, 300);
+        final saturation = _rnd.nextDoubleInRange(0.0, 0.3);
+        _lineColor[i] = HSVColor.fromAHSV(1.0, colorValue, saturation, 1.0).toColor();
+        _lineWidth[i] = _rnd.nextDoubleInRange(0.01, 0.03);
+      }
 
-      final selectedLineAngleScale = _selectedLineAngleScale[i] ?? 1.0;
-      _selectedLineAngle[i] = (_selectedLineAngle[i] ?? 0.0) + dt * math.pi * 2 * selectedLineAngleScale;
+      p = p % 1;
+      _linePercentage[i] = p;
     }
   }
 
@@ -168,96 +85,51 @@ class ShipRayRenderComponent extends PositionComponent with HasGameRef<GameCompo
   void render(Canvas canvas) {
     super.render(canvas);
     _renderLines(canvas);
-    _renderSelectedLines(canvas);
   }
 
   _renderLines(Canvas canvas) {
     if (_percentage <= 0.05) return;
 
-    final p = Paint()
-      ..color = Colors.white.withOpacity(0.2)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = width * 0.01;
+    canvas.save();
+    canvas.translate(width * 0.65, width * 0.65);
+    canvas.rotate(-math.pi * 0.25);
 
-    for (int line = 0; line <= _lineCount; line++) {
-      final startAngle = ((math.pi * 0.5) / _lineCount) * line;
-      final path = Path();
+    for (int i = 0; i < _lineCount; i++) {
+      final p = (_linePercentage[i] ?? 0.0);
+      final color = _lineColor[i] ?? Colors.transparent;
 
-      canvas.save();
-      canvas.translate(width * 0.65, width * 0.65);
-      canvas.rotate(startAngle);
+      final w = width * (1 - p);
+      final opacity = MathRangeUtil.multiRange(
+            p,
+            [0, 0.3, 1.0],
+            [0, 0.8, 0.0],
+          ) *
+          _percentage;
 
-      final amplitude = _lineAmplitude[line] ?? 0.0;
-      final lineAngle = _lineAngle[line] ?? 0.0;
-      final lineLength = _lineLength[line] ?? 1.0;
-      final lineColor = _lineColor[line] ?? 0.0;
-      final color = HSVColor.fromAHSV(1.0, lineColor, 0.3, 1.0).toColor().withOpacity(0.3 * _animatedLineOpacity);
-      for (int i = 0; i < _linePoints; i++) {
-        final percentage = i / _linePoints;
-        final angle = math.pi * 2 * percentage * (amplitude * lineLength) + lineAngle;
-        final d = width * 0.05;
-        final x = percentage * width * lineLength;
-        final y = d * math.sin(angle);
+      final lineWidth = _lineWidth[i] ?? 0.0;
 
-        if (i == 0) {
-          path.moveTo(x, y);
-        } else {
-          path.lineTo(x, y);
-        }
-      }
+      final paint = Paint()
+        ..color = color.withOpacity(opacity)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = width * lineWidth
+        ..strokeCap = StrokeCap.round;
 
-      canvas.drawPath(path, p..color = color);
-      canvas.restore();
+      const m = 2.0;
+      final rect = Rect.fromLTWH(
+        width * m * 0.5 * p * _percentage - width * m * 0.5 * _percentage,
+        0,
+        w * m * _percentage,
+        w * _percentage,
+      );
+      canvas.drawArc(
+        rect,
+        math.pi * 0.2,
+        math.pi * 0.6,
+        false,
+        paint,
+      );
     }
-  }
-
-  _renderSelectedLines(Canvas canvas) {
-    if (_percentage <= 0.05) return;
-
-    final maxDistance = game.game.ship.rayLength.value;
-    final count = game.game.ship.rayCount.value.floor();
-
-    final paintLine = Paint()
-      ..color = Colors.white.withOpacity(0.2)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = width * 0.03;
-
-    final paintCircle = Paint()
-      ..color = Colors.white.withOpacity(0.2)
-      ..style = PaintingStyle.fill;
-
-    for (int line = 0; line <= count; line++) {
-      final lineOpacity = (_animatedSelectedLineOpacity[line] ?? 0.0).clamp(0.0, 1.0);
-      final lineLength = _animatedSelectedLineLength[line] ?? 0.0;
-      final lineLengthPercentage = (lineLength / maxDistance).clamp(0.0, 1.0);
-
-      final path = Path();
-
-      canvas.save();
-      canvas.translate(width * 0.65, width * 0.65);
-      canvas.rotate(_animatedSelectedLineAngle[line] ?? 0.0);
-
-      final amplitude = (_selectedLineAmplitude[line] ?? 0.0);
-      final lineAngle = _selectedLineAngle[line] ?? 0.0;
-      final lineColor = _selectedLineColor[line] ?? 0.0;
-      final color = HSVColor.fromAHSV(1.0, lineColor, 0.3, 1.0).toColor().withOpacity(lineOpacity);
-      for (int i = 0; i < _linePoints; i++) {
-        final percentage = i / _linePoints;
-        final x = percentage * lineLengthPercentage * width;
-        final angle = math.pi * 2 * percentage * (amplitude * lineLength) + lineAngle;
-        final d = width * 0.02;
-        final y = d * math.sin(angle);
-
-        if (i == 0) {
-          path.moveTo(x, y);
-        } else {
-          path.lineTo(x, y);
-        }
-      }
-
-      canvas.drawPath(path, paintLine..color = color);
-      canvas.restore();
-    }
+    canvas.restore();
   }
 
   var _delay = 0.0;
@@ -270,19 +142,33 @@ class ShipRayRenderComponent extends PositionComponent with HasGameRef<GameCompo
     final satellites = game.world.shipComponent.rayComponent.selectedSatellites;
     for (var element in satellites.entries) {
       for (int i = 0; i < 5; i++) {
-        final r = element.value.satellite.radius * 0.5;
-
         final angle = _rnd.nextDouble() * 2 * math.pi;
         final d = _rnd.nextDoubleInRange(0.1, 0.5);
-        final particleX = element.value.position.x + d * math.cos(angle);
-        final particleY = element.value.position.y + d * math.sin(angle);
+
         game.world.shipRayLayer.add(
           ShipRayParticleComponent(
-            startPosition: Vector2(
-              particleX,
-              particleY,
-            ),
-            radius: 0.2,
+            positionBuilder: () {
+              final particleX = element.value.position.x + d * math.cos(angle);
+              final particleY = element.value.position.y + d * math.sin(angle);
+
+              return Vector2(
+                particleX,
+                particleY,
+              );
+            },
+            opacityBuilder: () {
+              final particleX = element.value.position.x + d * math.cos(angle);
+              final particleY = element.value.position.y + d * math.sin(angle);
+              final position = Vector2(particleX, particleY);
+              final shipPosition = game.world.shipComponent.position;
+              final maxDistance = game.game.ship.rayLength.value;
+              final percentage = (position.distanceTo(shipPosition) / maxDistance).clamp(0.0, 1.0);
+              return MathRangeUtil.multiRange(
+                percentage,
+                [0.00, 0.25, 0.50, 1.00],
+                [0.00, 0.00, 0.25, 1.00],
+              );
+            },
           ),
         );
       }

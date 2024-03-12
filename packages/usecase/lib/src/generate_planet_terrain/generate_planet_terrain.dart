@@ -10,7 +10,7 @@ class GeneratePlanetTerrainUseCase {
   final _rnd = RandomUtil();
 
   PlanetTerrain call() {
-    const resolution = 50.0;
+    const resolution = 20.0;
     final colors = _rnd.item(planetColors);
 
     final terrain = Array<double>();

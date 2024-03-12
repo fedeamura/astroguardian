@@ -5,7 +5,6 @@ import 'package:astro_guardian/widgets/common/game_dialog_content/game_dialog_co
 import 'package:astro_guardian/widgets/common/game_list_tile/game_list_tile.dart';
 import 'package:astro_guardian/widgets/screen/game/view/screen.dart';
 import 'package:astro_guardian/widgets/screen/game_new/game_new.dart';
-import 'package:astro_guardian/widgets/screen/splash/splash.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:get_it/get_it.dart';
@@ -35,9 +34,9 @@ class _GameListScreenState extends State<GameListScreenContent> {
     return GameDialogContent(
       animation: widget.animation,
       title: "Games",
-      onCloseButtonPressed: () => _goBack(context),
+      onCloseButtonPressed: () => Navigator.of(context).pop(),
+      onBackgroundPressed: () => Navigator.of(context).pop(),
       closeButtonVisible: true,
-      onBackgroundPressed: () => _goBack(context),
       builder: (context) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -51,7 +50,8 @@ class _GameListScreenState extends State<GameListScreenContent> {
           ..._games.map(
             (game) => GameListTile(
               margin: const EdgeInsets.only(top: 8.0),
-              title: game.createdAt.toIso8601String(),
+              title: "Created at:",
+              message: game.createdAt.toIso8601String(),
               onPressed: () => _openGame(context, game),
               onLongPressed: () => _showGameDialog(context, game),
             ),
@@ -75,11 +75,6 @@ class _GameListScreenState extends State<GameListScreenContent> {
       _games = data;
     });
   }
-
-  _goBack(BuildContext context) => replaceScreen(
-        context,
-        const SplashScreen(),
-      );
 
   _createNew(BuildContext context) => replaceScreen(
         context,

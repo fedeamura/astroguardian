@@ -26,7 +26,8 @@ class GameComponent extends Forge2DGame<GameWorld> {
   final Function()? gameLost;
   final Function()? mapDebug;
   final Function(double noise)? noiseChanged;
-  final Function()? onReady;
+  final Function()? onMounted;
+  final Function()? show;
   final Function()? openShip;
   final Future<void> Function(ConversationType type)? showConversation;
 
@@ -38,12 +39,14 @@ class GameComponent extends Forge2DGame<GameWorld> {
     this.gameLost,
     this.mapDebug,
     this.noiseChanged,
-    this.onReady,
+    this.onMounted,
     this.openShip,
     this.showConversation,
+    this.show,
   }) : super(world: GameWorld());
 
   double _generateMapUpdate = 0.1;
+  bool _isInit = false;
 
   GameService get gameService => GetIt.I.get();
 
@@ -94,21 +97,54 @@ class GameComponent extends Forge2DGame<GameWorld> {
 
     camera.viewfinder.visibleGameSize = Vector2.all(GameConstants.chunkSize * 0.25);
     await camera.backdrop.add(BackgroundComponent());
-
-    world.mounted.then((value) {
-      onReady?.call();
-      showConversation?.call(ConversationType.tutorialInit);
-      camera.follow(world.shipComponent);
-    });
-
     return super.onLoad();
+  }
+
+  _init() {
+    camera.follow(world.shipComponent);
+    onMounted?.call();
+  }
+
+  void init() {
+    final vf = camera.viewfinder;
+    final initialZoom = vf.zoom;
+    show?.call();
+
+    vf.add(
+      ScaleEffect.to(
+        Vector2.all(initialZoom * 10),
+        EffectController(duration: 0.1),
+        onComplete: () {
+          vf.add(
+            ScaleEffect.to(
+              Vector2.all(initialZoom),
+              EffectController(
+                duration: 2.0,
+                curve: Curves.easeInOut,
+              ),
+              onComplete: () {
+                showConversation?.call(ConversationType.tutorialInit);
+              },
+            ),
+          );
+        },
+      ),
+    );
   }
 
   @override
   void update(double dt) {
     super.update(dt);
+    _calculateMounted();
     _generateMap(dt);
     _updateTutorial();
+  }
+
+  _calculateMounted() {
+    if (!world.isMounted) return;
+    if (_isInit) return;
+    _isInit = true;
+    _init();
   }
 
   _updateTutorial() {
@@ -282,7 +318,6 @@ class GameComponent extends Forge2DGame<GameWorld> {
 
   final _rnd = RandomUtil();
 
-
   consumeNearestPlanet() {
     final shipPosition = world.shipComponent.position;
     final planets = game.chunks.entries.where((e) => e.value.planet != null).map((e) => e.value.planet!).toList();
@@ -300,6 +335,17 @@ class GameComponent extends Forge2DGame<GameWorld> {
     final planet = planets.first;
     log("Planet ${planet.uid}");
     focusPlanet(planet);
+  }
+
+
+  clearMovement(){
+    keyLeftPressed = false;
+    keyMovePressed = false;
+    keyRightPressed = false;
+    keyStopPressed = false;
+    world.shipComponent.body.linearVelocity.x = 0;
+    world.shipComponent.body.linearVelocity.y = 0;
+    world.shipComponent.body.angularVelocity = 0;
   }
 
   double get gameScale => math.max(size.x, size.y) * 0.005;

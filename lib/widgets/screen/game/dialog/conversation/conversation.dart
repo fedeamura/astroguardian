@@ -10,6 +10,8 @@ Future<void> showGameConversation(
   required ConversationType type,
 }) async {
   if (!game.game.shouldShowConversation(type)) return;
+  game.clearMovement();
+
   await Navigator.of(context).openDialog(
     (animation) => GameConversationContent(
       game: game,

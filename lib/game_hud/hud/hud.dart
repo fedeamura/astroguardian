@@ -1,12 +1,13 @@
 import 'dart:async';
 
+import 'package:astro_guardian/game/util/painter/image.dart';
 import 'package:astro_guardian/game_hud/game_hud.dart';
 import 'package:astro_guardian/game_hud/hud/bag.dart';
 import 'package:astro_guardian/game_hud/hud/menu_button.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
-import 'package:util/util.dart';
 import 'package:model/model.dart';
+import 'package:util/util.dart';
 
 import 'button.dart';
 import 'center_tap.dart';
@@ -27,20 +28,61 @@ class HudComponent extends PositionComponent with HasGameRef<GameHudComponent> {
   late HudBagComponent _hudBagComponent;
   late HudMenuButtonComponent _hudMenuButtonComponent;
 
+  bool get _mustLevelUpShip {
+    final g = game.gameComponent.game;
+    final completed = g.conversations.entries.where((e) => e.value == true).map((e) => e.key).toList();
+    completed.sort((a, b) => b.value.compareTo(a.value));
+
+    if (completed.isEmpty) return false;
+    if (completed[0] == ConversationType.tutorialLevelUp) return true;
+    return false;
+  }
+
   @override
   FutureOr<void> onLoad() async {
+    String arrowLeft = '''
+    .......
+    ..x....
+    .x.....
+    xxxxxxx
+    .x.....
+    ..x....
+    .......
+    ''';
+
+    String arrowRight = '''
+    .......
+    ....x..
+    .....x.
+    xxxxxxx
+    .....x.
+    ....x..
+    .......
+    ''';
+
+
     _mapComponent = HudMapCameraComponent();
     await add(_mapComponent);
 
     _buttonLeftComponent = HudButtonComponent(
       callbackTapDown: () => game.gameComponent.keyLeftPressed = true,
       callbackTapUp: () => game.gameComponent.keyLeftPressed = false,
+      image: ImagePainterUtil.drawPixelsString(
+        paint: Paint()..color = Colors.white,
+        data: arrowLeft,
+      ),
+      imageSize: PointInt(7, 7),
     );
     await add(_buttonLeftComponent);
 
     _buttonRightComponent = HudButtonComponent(
       callbackTapDown: () => game.gameComponent.keyRightPressed = true,
       callbackTapUp: () => game.gameComponent.keyRightPressed = false,
+      image: ImagePainterUtil.drawPixelsString(
+        paint: Paint()..color = Colors.white,
+        data: arrowRight,
+      ),
+      imageSize: PointInt(7, 7),
     );
     await add(_buttonRightComponent);
 
@@ -130,6 +172,7 @@ class HudComponent extends PositionComponent with HasGameRef<GameHudComponent> {
 
   bool get _isButtonConsumeVisible {
     if (!game.gameComponent.game.tutorial) return true;
+    if (_mustLevelUpShip) return false;
     final conversations = game.gameComponent.game.conversations;
     return conversations[ConversationType.tutorialPlanetFound] == true;
   }

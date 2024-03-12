@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 import 'dart:ui';
 
 import 'package:astro_guardian/game/border.dart';
@@ -6,20 +7,26 @@ import 'package:astro_guardian/game/util/lerp.dart';
 import 'package:astro_guardian/game_hud/game_hud.dart';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
+import 'package:model/model.dart';
 
 class HudButtonComponent extends PositionComponent with HasGameRef<GameHudComponent>, TapCallbacks {
   final Color? color;
   final Function()? callbackTapDown;
   final Function()? callbackTapUp;
   late BorderComponent _borderComponent;
-
+  final ui.Image? image;
+  final PointInt? imageSize;
   bool visible = true;
 
   HudButtonComponent({
     this.callbackTapDown,
     this.callbackTapUp,
     this.color,
+    this.image,
+    this.imageSize,
   });
+
+  SpriteComponent? _spriteComponent;
 
   @override
   FutureOr<void> onLoad() async {
@@ -28,6 +35,16 @@ class HudButtonComponent extends PositionComponent with HasGameRef<GameHudCompon
       gameScaleProvider: () => game.gameComponent.gameScale,
     );
     await add(_borderComponent);
+
+    if (image != null) {
+      _spriteComponent = SpriteComponent(
+        sprite: Sprite(
+          image!,
+          srcSize: imageSize != null ? Vector2(imageSize!.x.toDouble(), imageSize!.y.toDouble()) : null,
+        ),
+      );
+      await _borderComponent.add(_spriteComponent!);
+    }
 
     if (!visible) {
       _borderComponent.opacity = 0;
@@ -39,6 +56,9 @@ class HudButtonComponent extends PositionComponent with HasGameRef<GameHudCompon
   @override
   void update(double dt) {
     _borderComponent.size = size;
+    _spriteComponent?.size = size - Vector2.all(game.gameComponent.gameScale * 6);
+    _spriteComponent?.position = Vector2.all(game.gameComponent.gameScale * 3);
+
     if (color != null) {
       _borderComponent.backgroundColor = color!;
     }
@@ -65,7 +85,6 @@ class HudButtonComponent extends PositionComponent with HasGameRef<GameHudCompon
   @override
   void onTapDown(TapDownEvent event) {
     if (!visible) return;
-
     callbackTapDown?.call();
     super.onTapDown(event);
   }
@@ -73,8 +92,14 @@ class HudButtonComponent extends PositionComponent with HasGameRef<GameHudCompon
   @override
   void onTapUp(TapUpEvent event) {
     if (!visible) return;
-
     callbackTapUp?.call();
     super.onTapUp(event);
+  }
+
+  @override
+  void onTapCancel(TapCancelEvent event) {
+    if (!visible) return;
+    callbackTapUp?.call();
+    super.onTapCancel(event);
   }
 }

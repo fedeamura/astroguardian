@@ -60,7 +60,7 @@ class ShipRayComponent extends PositionComponent with HasGameRef<GameComponent> 
     final length = game.game.ship.rayLength.value;
 
     final toPoints = <Vector2>[];
-    const maxAngle = 2 * math.pi * 0.25;
+    const maxAngle = 2 * math.pi * 0.20;
     const rayCount = 100;
     const step = maxAngle / rayCount;
 

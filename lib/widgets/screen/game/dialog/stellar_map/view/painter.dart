@@ -6,16 +6,20 @@ import 'package:touchable/touchable.dart';
 class MapPainter extends CustomPainter {
   final BuildContext context;
   final GameComponent game;
-  final List<PlanetSummaryItem> points;
+  final List<PlanetSummaryItem> planets;
   final double zoomScale;
   final Offset shipPosition;
+  final Function(PlanetSummaryItem planet)? onPressed;
+  final String selectedUid;
 
   MapPainter({
     required this.context,
     required this.game,
-    required this.points,
+    required this.planets,
     required this.zoomScale,
     required this.shipPosition,
+    required this.selectedUid,
+    this.onPressed,
   });
 
   @override
@@ -29,7 +33,7 @@ class MapPainter extends CustomPainter {
     double maxX = double.negativeInfinity;
     double maxY = double.negativeInfinity;
 
-    for (final planet in points) {
+    for (final planet in planets) {
       final pos = Offset(planet.position.x, planet.position.y);
       minX = minX < pos.dx ? minX : pos.dx;
       minY = minY < pos.dy ? minY : pos.dy;
@@ -48,7 +52,7 @@ class MapPainter extends CustomPainter {
       forceCenter = true;
     }
 
-    for (final planet in points) {
+    for (final planet in planets) {
       final pos = Offset(planet.position.x, planet.position.y);
       final s = 8.0 * multiplier * (1 / zoomScale);
 
@@ -65,7 +69,10 @@ class MapPainter extends CustomPainter {
         myCanvas.drawCircle(
           Offset(x - s * 0.5, y - s * 0.5),
           s,
-          Paint()..color = Colors.white.withOpacity(0.7),
+          Paint()..color = selectedUid == planet.uid ? Colors.amber : Colors.white.withOpacity(0.7),
+          onTapUp: (details) {
+            onPressed?.call(planet);
+          },
         );
       }
     }
@@ -81,19 +88,38 @@ class MapPainter extends CustomPainter {
     }
 
     if (!s.isNaN && !x.isNaN && !y.isNaN) {
-      canvas.drawCircle(
-        Offset(x - s * 0.5, y - s * 0.5),
-        s,
+      final path = Path();
+      path.moveTo(
+        0,
+        -s * 0.5,
+      );
+      path.lineTo(
+        s * 0.5,
+        s * 0.5,
+      );
+      path.lineTo(
+        -s * 0.5,
+        s * 0.5,
+      );
+      path.close();
+
+      canvas.save();
+
+      canvas.translate(x - s * 0.5, y - s * 0.5);
+      canvas.drawPath(
+        path,
         Paint()..color = Colors.amber,
       );
+      canvas.restore();
     }
   }
 
   @override
   bool shouldRepaint(covariant MapPainter oldDelegate) {
-    if (oldDelegate.points != points) return true;
+    if (oldDelegate.planets != planets) return true;
     if (oldDelegate.zoomScale != zoomScale) return true;
     if (oldDelegate.shipPosition != shipPosition) return true;
+    if (oldDelegate.selectedUid != selectedUid) return true;
     return false;
   }
 }

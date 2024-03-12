@@ -13,14 +13,12 @@ class HudBagComponent extends PositionComponent with HasGameRef<GameHudComponent
 
   double get _anim => 0.2;
   bool _visible = true;
-  bool _menuVisible = false;
   bool _first = true;
 
   @override
   FutureOr<void> onLoad() async {
     anchor = Anchor.center;
     _visible = _calculateVisibility();
-    _menuVisible = _calculateMenuVisibility();
 
     _borderComponent = BorderComponent(
       gameScaleProvider: () => game.gameComponent.gameScale,
@@ -57,16 +55,14 @@ class HudBagComponent extends PositionComponent with HasGameRef<GameHudComponent
     _borderComponent.size = s;
     _borderComponent.position = Vector2.all(0);
 
-    final menuVisible = _calculateMenuVisibility();
-
     if (_first) {
       _first = false;
-      position.x = p.left + padding + s.x * 0.5 + (_menuVisible ? 7 * scale : 0.0);
+      position.x = p.left + padding + s.x * 0.5 + 7 * scale;
     }
 
     final px = LerpUtils.d(
       dt,
-      target: p.left + padding + s.x * 0.5 + (menuVisible ? 7 * scale : 0.0),
+      target: p.left + padding + s.x * 0.5 + 7 * scale,
       value: position.x,
       time: 0.1,
     );
@@ -78,13 +74,12 @@ class HudBagComponent extends PositionComponent with HasGameRef<GameHudComponent
 
     final percentage = game.gameComponent.game.ship.bagPercentage;
     final color = ColorTween(
-      begin: Colors.green.shade500,
-      end: Colors.red.shade600,
-    ).lerp(percentage) ??
+          begin: Colors.green.shade500,
+          end: Colors.red.shade600,
+        ).lerp(percentage) ??
         Colors.white;
 
-    _component.paint = Paint()
-      ..color = color;
+    _component.paint = Paint()..color = color;
 
     _component.position = _borderComponent.position + Vector2.all(scale * 2);
 
@@ -105,7 +100,6 @@ class HudBagComponent extends PositionComponent with HasGameRef<GameHudComponent
 
   _updateVisibility(double dt) {
     _visible = _calculateVisibility();
-    _menuVisible = _calculateMenuVisibility();
 
     final scaleValue = LerpUtils.d(
       dt,
@@ -135,12 +129,5 @@ class HudBagComponent extends PositionComponent with HasGameRef<GameHudComponent
     if (!game.gameComponent.game.tutorial) return true;
     final conversations = game.gameComponent.game.conversations;
     return conversations[ConversationType.tutorialRecycle] == true;
-  }
-
-
-  bool _calculateMenuVisibility() {
-    if (!game.gameComponent.game.tutorial) return true;
-    final conversations = game.gameComponent.game.conversations;
-    return conversations[ConversationType.tutorialLevelUp] == true;
   }
 }

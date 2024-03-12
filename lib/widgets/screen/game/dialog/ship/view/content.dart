@@ -46,6 +46,7 @@ class _GameDialogShipContentState extends State<GameDialogShipContent> {
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
+            padding: EdgeInsets.zero,
             itemBuilder: (context, index) {
               final ability = abilities[index].key;
               final step = abilities[index].value;

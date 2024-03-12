@@ -2,13 +2,11 @@ import 'package:model/model.dart';
 
 enum ConversationType {
   tutorialInit,
-  tutorialMapLimit,
   tutorialPlanetFound,
   tutorialBagFull,
   tutorialRecycle,
   tutorialLevelUp,
   tutorialImproveShip,
-  tutorialSatellitesCompleted,
   tutorialPlanetCompleted,
   tutorialStartAdventure;
 
@@ -24,16 +22,12 @@ enum ConversationType {
         return 4;
       case ConversationType.tutorialLevelUp:
         return 5;
-      case ConversationType.tutorialSatellitesCompleted:
-        return 6;
       case ConversationType.tutorialImproveShip:
         return 7;
       case ConversationType.tutorialStartAdventure:
         return 8;
       case ConversationType.tutorialPlanetCompleted:
         return 9;
-      case ConversationType.tutorialMapLimit:
-        return 10;
     }
   }
 
@@ -51,14 +45,10 @@ enum ConversationType {
         return true;
       case ConversationType.tutorialImproveShip:
         return true;
-      case ConversationType.tutorialSatellitesCompleted:
-        return true;
       case ConversationType.tutorialPlanetCompleted:
         return true;
       case ConversationType.tutorialStartAdventure:
         return true;
-      case ConversationType.tutorialMapLimit:
-        return false;
     }
   }
 
@@ -76,14 +66,31 @@ enum ConversationType {
         return _tutorialLevelUp;
       case ConversationType.tutorialImproveShip:
         return _tutorialImproveShip;
-      case ConversationType.tutorialSatellitesCompleted:
-        return _tutorialSatellitesCompleted;
       case ConversationType.tutorialPlanetCompleted:
         return _tutorialPlanetCompleted;
       case ConversationType.tutorialStartAdventure:
         return _tutorialStartAdventure;
-      case ConversationType.tutorialMapLimit:
-        return _tutorialMapLimit;
+    }
+  }
+
+  String get hint {
+    switch (this) {
+      case ConversationType.tutorialInit:
+        return "Follow the yellow indicator";
+      case ConversationType.tutorialPlanetFound:
+        return "Collect space junk";
+      case ConversationType.tutorialBagFull:
+        return "Tap on the ship to recycle";
+      case ConversationType.tutorialRecycle:
+        return "Fill the data bar";
+      case ConversationType.tutorialLevelUp:
+        return "Upgrade the ship from the menu";
+      case ConversationType.tutorialImproveShip:
+        return "Collect all the space junk";
+      case ConversationType.tutorialPlanetCompleted:
+        return "";
+      case ConversationType.tutorialStartAdventure:
+        return "";
     }
   }
 
@@ -115,32 +122,34 @@ enum ConversationType {
       ConversationData(
         speaker: ConversationSpeaker.shipBot,
         messages: [
-          "Encontraste el planeta. Veamos si podemos comunicarnos con ellos",
+          "We found the planet Captain Dash!",
+          "Do you see that interference? It's very strange",
+          "I am going to try to communicate with the planet",
           "...",
-          "Establecimos conneccion!",
+          "We established connection!",
         ],
       ),
       ConversationData(
         speaker: ConversationSpeaker.planetPresident,
         messages: [
-          "Buen dia capitan! Necesitamos tu ayuda",
-          "Como podras ver nuestro planeta se encuentra cubierto de basura espacial",
-          "La basura espacial nos perjudica ya que nos quita visibilidad, puede ocasionar problemas en nuestros satelites salientes y generate ruido",
-          "Si no es mucha molestia podrias recolectar esa basura por nosotros?"
+          "Good morning Captain Dash. Glad you could make it",
+          "As you can see, our planet is covered with space debris",
+          "Space debris can cause collisions, disrupt telecommunications, generate more waste, and endanger manned missions",
+          "Also generates that annoying interference in the sensors of the ships",
+          "Could you help us remove all that space debris?"
         ],
       ),
       ConversationData(
         speaker: ConversationSpeaker.captainDash,
         messages: [
-          "Por supuesto que si! Aunque no se me ocurre muy bien como hacerlo... Se te ocurre algo Dartina?",
+          "Of course! Although I can't think of a good way to do it... Can you think of something, Dartina?",
         ],
       ),
       ConversationData(
         speaker: ConversationSpeaker.shipBot,
         messages: [
-          "Nuestra nave esta equipada con un rayo atractor. Acabo de configurarlo para poder atraer la basura espacial y almacenarla en nuestra bodega",
-          "Que tal si intentas hacerlo?",
-          "Presiona el boton azul para activarlo"
+          "Our ship is equipped with an attractor beam. I just configured it to be able to attract the space debris and store it in our cargo hold",
+          "Press the blue button to activate it"
         ],
       ),
     ];
@@ -151,17 +160,19 @@ enum ConversationType {
       ConversationData(
         speaker: ConversationSpeaker.shipBot,
         messages: [
-          "Al parecer la bodega de la nave esta llena. No podras recoger mas basura espacial hasta que nos deshagamos de ella de alguna forma",
+          "It seems the ship's cargo hold is full. We won't be able to collect more space debris until we find a way to get rid of it",
         ],
       ),
       ConversationData(
         speaker: ConversationSpeaker.captainDash,
-        messages: ["Pero no podemos tirarla por ahi! Que podriamos hacer?"],
+        messages: [
+          "We can't just toss it out there! What could we do?",
+        ],
       ),
       ConversationData(
         speaker: ConversationSpeaker.shipBot,
         messages: [
-          "Que te parece si la reciclamos? La nave cuenta con un potente compactador. Solo tienes que tocar sobre la nave y yo me encargare de activar los procedimientos necesarios.",
+          "How about we recycle it? The ship has a powerful compactor. Just tap on the ship and I'll take care of activating the necessary procedures",
         ],
       ),
     ];
@@ -172,10 +183,10 @@ enum ConversationType {
       ConversationData(
         speaker: ConversationSpeaker.shipBot,
         messages: [
-          "Eso ha funcionado a la perfeccion! Toda la basura fue reciclada",
-          "Al reciclar basura espacial obtengo datos y tengo la teoria que si juntas suficientes podremos utilizarlos en la nave de alguna forma",
-          "Te agregare un indicador de la capacidad de la bodega y otro con la cantidad de datos recopilados",
-          "Intenta llenar la barra de datos!"
+          "That worked perfectly! All the trash has been recycled",
+          "By recycling space debris, I gather data and I have a theory that if we collect enough, we might be able to use it somehow on the ship",
+          "I'll add an indicator for the cargo hold capacity and another one for the amount of data collected",
+          "Let's try to fill up that data bar!",
         ],
       ),
     ];
@@ -186,8 +197,8 @@ enum ConversationType {
       ConversationData(
         speaker: ConversationSpeaker.shipBot,
         messages: [
-          "Tengo buenas noticias capitan. Al reciclar la basura espacial, consegui datos suficientes como para mejorar nuestra nave",
-          "Porque no pruebas mejorar la nave desde tu menu?"
+          "Great news, Captain Dash. By recycling the space debris, I managed to gather enough data to upgrade our ship",
+          "From the menu, you can spend your experience points to upgrade the ship",
         ],
       ),
     ];
@@ -198,20 +209,8 @@ enum ConversationType {
       ConversationData(
         speaker: ConversationSpeaker.shipBot,
         messages: [
-          "Veo que haz logrado mejorar la nave!",
-          "Que te parece si terminamos de ayudar a la presidente y recolectamos toda la basura espacial que orbita el planeta?"
-        ],
-      ),
-    ];
-  }
-
-  List<ConversationData> get _tutorialSatellitesCompleted {
-    return [
-      ConversationData(
-        speaker: ConversationSpeaker.shipBot,
-        messages: [
-          "Lo lograste Capitan Dash! Que hermoso se ve el planeta sin toda esa basura espacial y esa interferencia",
-          "Guardare los datos del planeta por su luego quieres revisarlos desde el menu",
+          "The ship is working much better now!",
+          "How about we finish helping the President and collect all the space junk orbiting the planet",
         ],
       ),
     ];
@@ -222,21 +221,24 @@ enum ConversationType {
       ConversationData(
         speaker: ConversationSpeaker.shipBot,
         messages: [
-          "Estoy recibiendo una nueva comunicacion desde el planeta",
+          "You did it, Captain Dash! We've collected all the space junk from the planet",
+          "...",
+          "I'm receiving a new communication from the planet.",
           "...",
         ],
       ),
       ConversationData(
         speaker: ConversationSpeaker.planetPresident,
         messages: [
-          "Muchas gracias por la ayuda Capitan Dash. No se que habriamos hecho sin ti",
-          "Ahora nuestro planeta ya no tiene riesgos de colisiones por la basura espacial, y no tendremos dificultades para que nuestras naves salgan a la orbita",
-          "Ademas que se aprecia mucho mejor nuestro hermoso planeta sin toda esa basura orbitando, no te parece?",
+          "Thank you so much for the help, Captain Dash. I don't know what we would have done without you",
+          "Now the planet won't have problems with space junk, which can cause collisions, disrupt telecommunications, generate more waste, and endanger manned missions. Plus, the planet looks much more beautiful now!",
         ],
       ),
       ConversationData(
         speaker: ConversationSpeaker.captainDash,
-        messages: ["Por supuesto que si! Ha sido un honor ayudarla"],
+        messages: [
+          "It has been a true honor to help you, President",
+        ],
       ),
     ];
   }
@@ -245,33 +247,27 @@ enum ConversationType {
     return [
       ConversationData(
         speaker: ConversationSpeaker.shipBot,
-        messages: ["Oye capitan... eso ha sido mas divertido de lo que pensaba"],
-      ),
-      ConversationData(
-        speaker: ConversationSpeaker.captainDash,
-        messages: ["Tienes razon Dartina, lo he disfrutado mucho"],
-      ),
-      ConversationData(
-        speaker: ConversationSpeaker.shipBot,
         messages: [
-          "Que te parece si exploramos el cosmos en busca de planetas a los que ayudar?",
-          "Simplemente dirigete hacia cualquier direccion. El espacio es un lugar inmenso, dudo que tardemos mucho en encotrar nuevos planetas",
+          "Hey Captain Dash... that was more fun than I thought it would be",
         ],
       ),
       ConversationData(
         speaker: ConversationSpeaker.captainDash,
-        messages: ["En marcha!"],
+        messages: [
+          "You're right, Dartina, I've really enjoyed it",
+        ],
       ),
-    ];
-  }
-
-  List<ConversationData> get _tutorialMapLimit {
-    return [
       ConversationData(
         speaker: ConversationSpeaker.shipBot,
         messages: [
-          "Capitan! Te estas alejando mucho de la señal. Recuerda que ibamos a investigar que sucede",
-          "Recuerda seguir el indicador amarillo",
+          "How about we explore the cosmos in search of planets to help?",
+          "Just head in any direction. Space is a vast place, I'm sure we'll find planets in no time",
+        ],
+      ),
+      ConversationData(
+        speaker: ConversationSpeaker.captainDash,
+        messages: [
+          "Let's go!",
         ],
       ),
     ];

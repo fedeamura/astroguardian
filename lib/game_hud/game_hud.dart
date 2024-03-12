@@ -24,10 +24,31 @@ class GameHudComponent extends FlameGame with KeyboardEvents {
   @override
   Color backgroundColor() => Colors.transparent;
 
+  late HudComponent _hudComponent;
+  bool _isInit = false;
+
   @override
-  FutureOr<void> onLoad() {
-    camera.viewport.add(HudComponent());
+  FutureOr<void> onLoad() async {
+    _hudComponent = HudComponent();
+    await camera.viewport.add(_hudComponent);
     return super.onLoad();
+  }
+
+  _init() {
+    gameComponent.init();
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    _calculateMounted();
+  }
+
+  _calculateMounted() {
+    if (!isMounted) return;
+    if (_isInit) return;
+    _isInit = true;
+    _init();
   }
 
   @override

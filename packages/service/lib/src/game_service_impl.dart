@@ -42,26 +42,26 @@ class GameServiceImpl extends GameService {
     abilities[ShipAbility.bagSize] = StepParameter(
       maxLevel: 9,
       level: 0,
-      minValue: 10,
-      maxValue: 500,
+      minValue: 50,
+      maxValue: 300,
     );
     abilities[ShipAbility.rayLength] = StepParameter(
       maxLevel: 9,
       level: 0,
-      minValue: 4.0,
+      minValue: 3.0,
       maxValue: 10.0,
     );
     abilities[ShipAbility.raySpeed] = StepParameter(
       maxLevel: 9,
       level: 0,
       minValue: 3.0,
-      maxValue: 20.0,
+      maxValue: 10.0,
     );
     abilities[ShipAbility.rayCount] = StepParameter(
       maxLevel: 9,
       level: 0,
       minValue: 3.0,
-      maxValue: 30.0,
+      maxValue: 10.0,
     );
 
     final chunkSize = GameConstants.chunkSize;
@@ -78,10 +78,10 @@ class GameServiceImpl extends GameService {
     final initialPlanetGlobalPositionX = initialPlanetDistance * math.cos(initialPlanetAngle);
     final initialPlanetGlobalPositionY = initialPlanetDistance * math.sin(initialPlanetAngle);
     final initialPlanetGlobalPosition = PointDouble(initialPlanetGlobalPositionX, initialPlanetGlobalPositionY);
-    const initialPlanetSatelliteCount = 50;
-    const initialPlanetRadius = 5.0;
-    const initialPlanetSatelliteMinDistance = 8.0;
-    const initialPlanetSatelliteMaxDistance = 16.0;
+    const initialPlanetSatelliteCount = 200;
+    const initialPlanetRadius = 10.0;
+    const initialPlanetSatelliteMinDistance = 11.0;
+    const initialPlanetSatelliteMaxDistance = 20.0;
 
     final model = Game(
       uid: const Uuid().v4(),
@@ -100,7 +100,7 @@ class GameServiceImpl extends GameService {
       initialPlanetSatelliteMinDistance: initialPlanetSatelliteMinDistance,
       initialPlanetSatelliteMaxDistance: initialPlanetSatelliteMaxDistance,
       experience: 0,
-      totalExperience: 20,
+      totalExperience: 100,
       abilityPoints: 0,
       tutorial: true,
       mapMarker: initialPlanetGlobalPosition,
@@ -125,12 +125,6 @@ class GameServiceImpl extends GameService {
     await _gameRepository.save(model);
     return model;
   }
-
-  // @override
-  // Stream<List<Game>> streamAll() => _gameRepository.streamAll();
-
-  // @override
-  // Stream<Game?> streamByUid(String uid) => _gameRepository.streamByUid(uid);
 
   @override
   Future<void> delete(String uid) => _lock.synchronized(
@@ -189,10 +183,6 @@ class GameServiceImpl extends GameService {
 
         element.value.dirty = false;
       }
-
-      if (chunks.isNotEmpty) {
-        // log("${chunks.length} chunks saved");
-      }
     });
   }
 
@@ -249,7 +239,7 @@ class GameServiceImpl extends GameService {
       final rest = game.experience - game.totalExperience;
       game.experience = 0;
       game.abilityPoints += 1;
-      game.totalExperience *= 2;
+      game.totalExperience = (game.totalExperience * 1.3).floor();
 
       final abilities = getShipAbilitiesCandidates(game);
       if (abilities.isNotEmpty) {

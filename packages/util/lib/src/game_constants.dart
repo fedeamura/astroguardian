@@ -15,7 +15,7 @@ class GameConstants {
 
   static double get minimapSize => chunkSize * (renderDistance * 1.5);
 
-  static double get planetProbability => 0.4;
+  static double get planetProbability => 0.25;
 
   static double get planetSatelliteMinOrbit => 0.1;
 
@@ -23,7 +23,7 @@ class GameConstants {
 
   static int get planetSatelliteMaxCount => 1000;
 
-  static bool get crtEnabled => false;
+  static bool get crtEnabled => true;
 
   static bool get noiseEnabled => true;
 

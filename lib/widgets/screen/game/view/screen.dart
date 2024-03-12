@@ -10,8 +10,8 @@ import 'package:astro_guardian/widgets/screen/game_new/game_new.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
-import 'package:util/util.dart';
 import 'package:service/service.dart';
+import 'package:util/util.dart';
 
 class GameScreen extends StatefulWidget {
   final String uid;
@@ -24,11 +24,10 @@ class GameScreen extends StatefulWidget {
 
 class _GameScreenState extends State<GameScreen> {
   GameService get _gameService => GetIt.I.get();
-
-  GameComponent? _gameComponent;
-  GameHudComponent? _gameHudComponent;
-
+  final ValueNotifier<GameComponent?> _gameComponent = ValueNotifier(null);
+  final ValueNotifier<GameHudComponent?> _gameHudComponent = ValueNotifier(null);
   final ValueNotifier<double> _noise = ValueNotifier(0.0);
+  final ValueNotifier<bool> _visible = ValueNotifier(false);
 
   @override
   Widget build(BuildContext context) {
@@ -38,22 +37,44 @@ class _GameScreenState extends State<GameScreen> {
         backgroundColor: Colors.black,
         body: Stack(
           children: [
-            if (_gameComponent != null)
-              Positioned.fill(
-                child: CustomShaderNoise(
-                  enabled: GameConstants.noiseEnabled,
-                  percentage: _noise,
-                  child: GameWidget(
-                    game: _gameComponent!,
+            Positioned.fill(
+              child: CustomShaderNoise(
+                enabled: GameConstants.noiseEnabled,
+                percentage: _noise,
+                child: ValueListenableBuilder(
+                  valueListenable: _gameComponent,
+                  builder: (context, value, child) {
+                    final game = _gameComponent.value;
+                    if (game == null) return Container();
+                    return GameWidget(game: game);
+                  },
+                ),
+              ),
+            ),
+            Positioned.fill(
+              child: ValueListenableBuilder(
+                valueListenable: _gameHudComponent,
+                builder: (context, value, child) {
+                  final game = _gameHudComponent.value;
+                  if (game == null) return Container();
+                  return GameWidget(game: game);
+                },
+              ),
+            ),
+            Positioned.fill(
+              child: IgnorePointer(
+                child: ValueListenableBuilder(
+                  valueListenable: _visible,
+                  builder: (context, value, child) => AnimatedOpacity(
+                    opacity: _visible.value ? 0.0 : 1.0,
+                    duration: const Duration(seconds: 2),
+                    curve: Curves.easeInOut,
+                    child: child,
                   ),
+                  child: Container(color: Colors.black),
                 ),
               ),
-            if (_gameHudComponent != null)
-              Positioned.fill(
-                child: GameWidget(
-                  game: _gameHudComponent!,
-                ),
-              ),
+            ),
           ],
         ),
       ),
@@ -68,8 +89,8 @@ class _GameScreenState extends State<GameScreen> {
 
   @override
   void dispose() {
-    _gameComponent?.removeFromParent();
-    _gameHudComponent?.removeFromParent();
+    _gameComponent.value?.removeFromParent();
+    _gameHudComponent.value?.removeFromParent();
     super.dispose();
   }
 
@@ -84,41 +105,51 @@ class _GameScreenState extends State<GameScreen> {
 
     await gameService.openGame(game);
 
-    final gameComponent = GameComponent(
+    _gameComponent.value = GameComponent(
       game: game,
       paddingProvider: () => MediaQuery.of(context).padding,
       createNewGame: _createNewGame,
       recreate: _recreate,
       noiseChanged: (noise) => _noise.value = noise,
-      onReady: () => _loadHud(),
-      openShip: () => showGameDialogShip(
-        context,
-        game: _gameComponent!,
-      ),
-      showConversation: (type) => showGameConversation(
-        context,
-        game: _gameComponent!,
-        type: type,
-      ),
+      onMounted: () => _loadHud(),
+      openShip: () async {
+        final gameComponent = _gameComponent.value;
+        if (gameComponent == null) return;
+        await showGameDialogShip(
+          context,
+          game: gameComponent,
+        );
+      },
+      showConversation: (type) async {
+        final gameComponent = _gameComponent.value;
+        if (gameComponent == null) return;
+        await showGameConversation(
+          context,
+          game: gameComponent,
+          type: type,
+        );
+      },
+      show: () => _visible.value = true,
     );
-
-    setState(() => _gameComponent = gameComponent);
   }
 
   _loadHud() {
-    if (_gameComponent == null) return;
+    final gameComponent = _gameComponent.value;
+    if (gameComponent == null) return;
 
-    final gameHudComponent = GameHudComponent(
-      gameComponent: _gameComponent!,
+    _gameHudComponent.value = GameHudComponent(
+      gameComponent: gameComponent,
       createNewGame: _createNewGame,
       recreate: _recreate,
-      menuCallback: () => showGameDialogMenu(
-        context,
-        game: _gameComponent!,
-      ),
+      menuCallback: () async {
+        final component = _gameComponent.value;
+        if (component == null) return;
+        await showGameDialogMenu(
+          context,
+          game: component,
+        );
+      },
     );
-
-    setState(() => _gameHudComponent = gameHudComponent);
   }
 
   _createNewGame() => Navigator.of(context).screenReplace(const GameNewScreen(deleteAll: true));

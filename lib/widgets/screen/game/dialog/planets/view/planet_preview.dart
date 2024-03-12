@@ -35,6 +35,9 @@ class PlanetPreview extends StatelessWidget {
               gameFactory: () => PlanetInfoGame(
                 info: planet,
                 terrain: terrain!,
+                onLoaded: () {
+
+                },
               ),
             ),
     );
@@ -44,10 +47,12 @@ class PlanetPreview extends StatelessWidget {
 class PlanetInfoGame extends FlameGame {
   final PlanetInfo info;
   final PlanetTerrain terrain;
+  final Function()? onLoaded;
 
   PlanetInfoGame({
     required this.info,
     required this.terrain,
+    required this.onLoaded,
   });
 
   late PlanetRenderComponent _planetRenderComponent;
@@ -61,7 +66,9 @@ class PlanetInfoGame extends FlameGame {
       info: info,
       terrain: terrain,
     );
-    add(_planetRenderComponent);
+    await add(_planetRenderComponent);
+
+    _planetRenderComponent.loaded.then((value) => onLoaded?.call());
     return super.onLoad();
   }
 

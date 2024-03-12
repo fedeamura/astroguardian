@@ -156,7 +156,7 @@ class ExperienceParticleComponent extends BodyComponent<GameComponent> {
       if (sqrtDistance < 1.0) {
         _consume();
       } else {
-        const scaleFactor = 30.0; // Ajusta este valor para aumentar la velocidad de atracción
+        const scaleFactor = 30.0;
         final gravityForce = 1.0 / sqrtDistance * scaleFactor;
         final gravityDirection = -distance.normalized();
         final force = gravityDirection * gravityForce;
@@ -169,6 +169,7 @@ class ExperienceParticleComponent extends BodyComponent<GameComponent> {
     removeFromParent();
     final levelUp = game.gameService.increaseExperience(game.game, 1);
     if (levelUp) {
+      await Future.delayed(const Duration(seconds: 1));
       await game.showConversation?.call(ConversationType.tutorialLevelUp);
       await game.openShip?.call();
     }

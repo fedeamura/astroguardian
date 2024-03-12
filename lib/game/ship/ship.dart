@@ -7,6 +7,7 @@ import 'package:astro_guardian/game/game_mask.dart';
 import 'package:astro_guardian/game/planet_satellite/planet_satellite.dart';
 import 'package:astro_guardian/game/ship/experience_particle.dart';
 import 'package:astro_guardian/game/ship/ray.dart';
+import 'package:astro_guardian/game/util/lerp.dart';
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame_forge2d/flame_forge2d.dart';
@@ -17,7 +18,7 @@ import 'package:util/util.dart';
 import 'attraction_area.dart';
 import 'particle.dart';
 
-class ShipComponent extends BodyComponent<GameComponent> {
+class ShipComponent extends BodyComponent<GameComponent> with ContactCallbacks {
   final Vector2 startPosition;
   final double startRotation;
 
@@ -30,7 +31,7 @@ class ShipComponent extends BodyComponent<GameComponent> {
     required this.startRotation,
   });
 
-  bool get isGhost => false;
+  bool isGhost = false;
 
   bool isStopping = false;
 
@@ -105,23 +106,6 @@ class ShipComponent extends BodyComponent<GameComponent> {
 
     const shipScale = 1.0;
 
-    // Bag
-    body.createFixture(
-      FixtureDef(
-        PolygonShape()..setAsBox(0.5, 0.5, Vector2(0.0, 2.0), 0.0),
-        restitution: 0,
-        friction: 0,
-        density: 0,
-        filter: !isGhost
-            ? (Filter()
-              ..maskBits = shipMask
-              ..categoryBits = shipCategory)
-            : (Filter()
-              ..maskBits = ghostMask
-              ..categoryBits = ghostCategory),
-      ),
-    );
-
     // Ship
     body.createFixture(
       FixtureDef(
@@ -141,17 +125,23 @@ class ShipComponent extends BodyComponent<GameComponent> {
         restitution: 0,
         friction: 0,
         density: ship.density,
-        filter: !isGhost
-            ? (Filter()
-              ..maskBits = shipMask
-              ..categoryBits = shipCategory)
-            : (Filter()
-              ..maskBits = ghostMask
-              ..categoryBits = ghostCategory),
+        filter: _getFilter(),
       ),
     );
 
     body.resetMassData();
+  }
+
+  Filter _getFilter() {
+    if (isGhost) {
+      return Filter()
+        ..maskBits = shipNoSatelliteMask
+        ..categoryBits = shipCategory;
+    }
+
+    return Filter()
+      ..maskBits = shipMask
+      ..categoryBits = shipCategory;
   }
 
   @override
@@ -163,8 +153,21 @@ class ShipComponent extends BodyComponent<GameComponent> {
     _processTutorialMapLimit(dt);
     _updateNoise(dt);
     _updateConversations();
+    _updateGhostMode(dt);
 
     body.linearVelocity.clamp(Vector2.all(-10), Vector2.all(10.0));
+  }
+
+  double _opacity = 1.0;
+
+  _updateGhostMode(double dt) {
+    _opacity = LerpUtils.d(
+      dt,
+      target: isGhost ? (_ghostModeVisibility ? 1.0 : 0.5) : 1.0,
+      value: _opacity,
+      time: 0.1,
+    );
+    _spriteComponent.opacity = _opacity.clamp(0.0, 1.0);
   }
 
   _updateNoise(double dt) {
@@ -223,7 +226,7 @@ class ShipComponent extends BodyComponent<GameComponent> {
     if (force != Vector2.zero()) {
       if (!_informed && force.length > 1.5) {
         _informed = true;
-        game.showConversation?.call(ConversationType.tutorialMapLimit);
+        // game.showConversation?.call(ConversationType.tutorialMapLimit);
       }
       body.applyForce(force);
     } else {
@@ -540,5 +543,41 @@ class ShipComponent extends BodyComponent<GameComponent> {
     if (bagFull) {
       game.showConversation?.call(ConversationType.tutorialBagFull);
     }
+  }
+
+  bool _ghostModeVisibility = true;
+
+  @override
+  void beginContact(Object other, Contact contact) {
+    super.beginContact(other, contact);
+    if (other is PlanetSatelliteComponent) {
+      if (isGhost) return;
+      isGhost = true;
+
+      _time = 0.0;
+      _addGhostTimer();
+    }
+  }
+
+  double _time = 0.0;
+
+  _addGhostTimer() {
+    add(
+      TimerComponent(
+        period: 0.15,
+        autoStart: true,
+        repeat: false,
+        removeOnFinish: true,
+        onTick: () {
+          _time += 0.2;
+          if (_time >= 3.0) {
+            isGhost = false;
+          } else {
+            _ghostModeVisibility = !_ghostModeVisibility;
+            _addGhostTimer();
+          }
+        },
+      ),
+    );
   }
 }

@@ -46,15 +46,12 @@ class PlanetSatelliteComponent extends BodyComponent<GameComponent> {
 
   @override
   Body createBody() {
-    renderBody = true;
+    renderBody = false;
 
     final bodyDef = BodyDef(
       userData: this,
       position: Vector2(satellite.position.x, satellite.position.y),
       type: BodyType.dynamic,
-      allowSleep: true,
-      isAwake: false,
-      bullet: true,
     );
 
     final body = world.createBody(bodyDef);
@@ -67,30 +64,6 @@ class PlanetSatelliteComponent extends BodyComponent<GameComponent> {
       ),
     );
 
-    // settings.maxPolygonVertices = 100;
-    //
-    // final vertices = <Vector2>[];
-    // satellite.terrain.border.entries.where((e) => e.value == true).forEach((element) {
-    //   final x = element.position.x;
-    //   final y = element.position.y;
-    //   final resolution = satellite.terrain.resolution;
-    //   final px = x.toDouble() / resolution;
-    //   final py = y.toDouble() / resolution;
-    //   final w = satellite.radius * 2;
-    //   vertices.add(
-    //     Vector2(px * w, py * w) - Vector2.all(w * 0.5),
-    //   );
-    // });
-    //
-    // body.createFixture(
-    //   FixtureDef(
-    //     PolygonShape()..set(vertices),
-    //     filter: Filter()
-    //       ..maskBits = satelliteMask
-    //       ..categoryBits = satelliteCategory,
-    //   ),
-    // );
-
     return body;
   }
 
@@ -99,12 +72,13 @@ class PlanetSatelliteComponent extends BodyComponent<GameComponent> {
 
   @override
   void update(double dt) {
+    body.setTransform(satellite.position.vector2, 0.0);
+
     final angleToCenter = math.atan2(
       planet.globalPosition.y - satellite.position.y,
       planet.globalPosition.x - satellite.position.x,
     );
 
-    renderBody = false;
     body.setTransform(satellite.position.vector2, angleToCenter);
 
     double distanceToShipPercentage = 1.0;
@@ -134,8 +108,8 @@ class PlanetSatelliteComponent extends BodyComponent<GameComponent> {
       target: satellite.consuming
           ? MathRangeUtil.multiRange(
               distanceToShipPercentage,
-              [0.00, 0.25, 0.75, 1.00],
-              [0.00, 1.00, 1.00, 1.00],
+              [0.00, 0.3, 1.00],
+              [0.00, 0.0, 1.00],
             )
           : 1.0,
       value: _opacity,
@@ -165,18 +139,23 @@ class PlanetSatelliteComponent extends BodyComponent<GameComponent> {
         ],
       );
 
+  double _spriteOpacity = 0.0;
+
   @override
   void render(ui.Canvas canvas) {
     super.render(canvas);
     final isMainCamera = CameraComponent.currentCamera == game.camera;
 
+    double o;
     if (!isMainCamera) {
-      _spriteComponent.opacity = 0.0;
+      o = 0.0;
     } else {
-      _spriteComponent.opacity = _opacity.clamp(0.0, 1.0);
+      o = _opacity.clamp(0.0, 1.0);
     }
 
-    // _spriteComponent.opacity = 0.1;
-
+    if (o != _spriteOpacity) {
+      _spriteOpacity = o;
+      _spriteComponent.opacity = o;
+    }
   }
 }
